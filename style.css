@@ -1,138 +1,427 @@
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
-html {
-  font-family: "M PLUS Rounded 1c", sans-serif;
-}
-body {
-  overflow: hidden;
-  height: 100vh;
-  background: url("./assets/background.png") no-repeat center center fixed;
-  background-size: cover;
-  animation: showIn linear 2s forwards;
-  padding: 0 10px;
-}
-#demo {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-}
-header {
-  display: flex;
-  flex-direction: column;
-  padding-top: 5.5em;
-  align-items: center;
-}
-h1 {
-  font-weight: 600;
-  font-size: 1em;
-  display: inline-block;
-  padding: 0.3em 0.6em;
-  border-radius: 20px;
-  margin: 10px 0;
-  background-color: rgba(255, 255, 255, 0.5);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-.avatar {
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  width: 90px;
-  height: 90px;
-  border-radius: 100%;
-  overflow: hidden;
-  margin: 0;
-}
-.greet {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  color: #000;
-  font-weight: 500;
-  font-size: 18px;
-  display: inline-block;
-  padding: 0.3em 0.6em;
-  border-radius: 10px;
-  margin: 10px 0;
-  background-color: rgba(255, 255, 255, 0.5);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+/* ==========================================================================
+   Tokens
+   ========================================================================== */
+:root {
+  color-scheme: light dark;
+
+  --font-sans: "M PLUS Rounded 1c", ui-rounded, system-ui, sans-serif;
+
+  --text: #14181a;
+  --text-soft: rgba(20, 24, 26, 0.72);
+
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-bg-hover: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-hi: rgba(255, 255, 255, 0.9);
+
+  --shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.14);
+  --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.14), 0 12px 28px rgba(0, 0, 0, 0.22);
+
+  --focus-ring: #1b6ef3;
+  --focus-halo: rgba(255, 255, 255, 0.95);
+
+  --scrim: linear-gradient(
+    180deg,
+    rgba(8, 16, 10, 0.3) 0%,
+    rgba(8, 16, 10, 0.1) 38%,
+    rgba(8, 16, 10, 0.42) 100%
+  );
+  --bokeh: rgba(255, 248, 214, 0.55);
+
+  --blur: 8px;
+  --blur-hover: 14px;
+
+  --radius-pill: 999px;
+  --radius-card: 14px;
+
+  --s-1: 0.375rem;
+  --s-2: 0.625rem;
+  --s-3: 1rem;
+  --s-4: 1.5rem;
+  --s-5: 2.75rem;
 }
 
-img {
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #eaf1ec;
+    --text-soft: rgba(234, 241, 236, 0.74);
+
+    --glass-bg: rgba(16, 23, 19, 0.55);
+    --glass-bg-hover: rgba(26, 36, 30, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-hi: rgba(255, 255, 255, 0.24);
+
+    --shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.45);
+    --shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.45), 0 14px 32px rgba(0, 0, 0, 0.55);
+
+    --focus-ring: #7cc0ff;
+    --focus-halo: rgba(0, 0, 0, 0.8);
+
+    --scrim: linear-gradient(
+      180deg,
+      rgba(4, 10, 6, 0.55) 0%,
+      rgba(4, 10, 6, 0.34) 38%,
+      rgba(4, 10, 6, 0.66) 100%
+    );
+    --bokeh: rgba(214, 255, 208, 0.5);
+  }
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text);
+  background: url("./assets/background.png") no-repeat center center fixed;
+  background-size: cover;
+  background-color: #1a2620; /* shows through before the photo decodes */
+  padding: 0 var(--s-3);
+  animation: page-in 900ms ease forwards;
+}
+
+/* Contrast scrim over the photo. Sits under the content, above the photo. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--scrim);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Ambient bokeh (replaces the jparticles canvas — no JS, no network request)
+   ========================================================================== */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient span {
+  position: absolute;
+  bottom: -12vh;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle at 32% 32%, var(--bokeh), rgba(255, 248, 214, 0) 68%);
+  animation: drift linear infinite;
+  will-change: transform, opacity;
+}
+
+.ambient span:nth-child(1)  { left:  6%; width: 10px; height: 10px; animation-duration: 26s; animation-delay:  0s; }
+.ambient span:nth-child(2)  { left: 18%; width: 18px; height: 18px; animation-duration: 34s; animation-delay: -6s; }
+.ambient span:nth-child(3)  { left: 29%; width:  7px; height:  7px; animation-duration: 22s; animation-delay: -13s; }
+.ambient span:nth-child(4)  { left: 41%; width: 14px; height: 14px; animation-duration: 30s; animation-delay: -3s; }
+.ambient span:nth-child(5)  { left: 53%; width:  9px; height:  9px; animation-duration: 38s; animation-delay: -19s; }
+.ambient span:nth-child(6)  { left: 65%; width: 16px; height: 16px; animation-duration: 28s; animation-delay: -9s; }
+.ambient span:nth-child(7)  { left: 76%; width:  8px; height:  8px; animation-duration: 24s; animation-delay: -16s; }
+.ambient span:nth-child(8)  { left: 87%; width: 13px; height: 13px; animation-duration: 36s; animation-delay: -1s; }
+.ambient span:nth-child(9)  { left: 95%; width:  6px; height:  6px; animation-duration: 20s; animation-delay: -11s; }
+
+@keyframes drift {
+  0%   { transform: translate3d(0, 0, 0) scale(0.6);          opacity: 0; }
+  12%  {                                                       opacity: 0.9; }
+  88%  {                                                       opacity: 0.6; }
+  100% { transform: translate3d(4vw, -118vh, 0) scale(1.15);   opacity: 0; }
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+/* `margin: auto` rather than `justify-content: center`: it centers the same way
+   when there is room, but when the content is taller than the viewport it stays
+   fully scrollable instead of clipping the top out of reach. */
+.page {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 470px;
+  margin: auto;
+  padding: var(--s-5) 0;
+}
+
+/* ==========================================================================
+   Profile
+   ========================================================================== */
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 3px var(--glass-border),
+    0 0 0 4px rgba(0, 0, 0, 0.14),
+    var(--shadow-hover);
+}
+
+.avatar img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-ul {
-  margin: 0 auto;
+
+h1 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: var(--s-1) var(--s-3);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-rest);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+}
+
+/* ==========================================================================
+   Links
+   ========================================================================== */
+.links {
   list-style: none;
-  max-width: 470px;
-  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
 }
-li {
-  width: 100%;
-}
-li a {
-  color: #000;
-  margin: 20px 0;
+
+.links a {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: var(--s-2);
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-pill);
+  color: var(--text);
   text-decoration: none;
   font-weight: 500;
-  padding: 0.7em 2em;
-  border-radius: 40px;
-  gap: 5px;
-  background-color: rgba(255, 255, 255, 0.5);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: all linear 0.5s;
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-rest);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out,
+    background-color 180ms ease-out,
+    backdrop-filter 180ms ease-out;
 }
-li a:hover {
-  backdrop-filter: blur(15px);
+
+.links .icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
 }
-.icon {
-  width: 40px;
+
+.links .icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
-@keyframes showIn {
-  0% {
-    opacity: 0;
-    filter: blur(10px);
-  }
-  50% {
-    opacity: 0.5;
-    filter: blur(5px);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0);
-  }
+
+.links .label {
+  flex: 1 1 auto;
+  min-width: 0;
 }
-@keyframes fadeIn {
-  to {
-    left: 10px;
-  }
+
+/* Outbound arrow. Drawn with a mask so it inherits currentColor and — unlike
+   a text `content` glyph — is never announced by a screen reader. */
+.links a::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  opacity: 0.4;
+  -webkit-mask: var(--arrow) center / contain no-repeat;
+  mask: var(--arrow) center / contain no-repeat;
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+  --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M8 7h9v9'/%3E%3C/svg%3E");
 }
-@keyframes disappear {
-  from {
-    opacity: 1;
-    filter: blur(6px);
+
+@media (hover: hover) {
+  .links a:hover {
+    transform: translateY(-2px);
+    background-color: var(--glass-bg-hover);
+    box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-hover);
+    -webkit-backdrop-filter: blur(var(--blur-hover));
+    backdrop-filter: blur(var(--blur-hover));
   }
-  to {
-    opacity: 0;
-    filter: blur(0);
+
+  .links a:hover::after {
+    opacity: 0.85;
+    transform: translate(2px, -2px);
   }
 }
 
+.links a:active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-rest);
+  transition-duration: 60ms;
+}
+
+/* ==========================================================================
+   Focus
+   ========================================================================== */
+:where(a):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--focus-halo), var(--shadow-hover);
+}
+
+/* ==========================================================================
+   Greeting toast
+   ========================================================================== */
+.greet {
+  position: fixed;
+  z-index: 3;
+  top: max(var(--s-3), env(safe-area-inset-top));
+  left: max(var(--s-3), env(safe-area-inset-left));
+  max-width: min(20rem, calc(100vw - 2 * var(--s-3)));
+  /* Non-interactive, and it lingers at opacity 0 after fading out — never let
+     it swallow clicks aimed at whatever is underneath. */
+  pointer-events: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--radius-card);
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-rest);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+
+  opacity: 0;
+  transform: translateX(calc(-100% - var(--s-4)));
+  transition:
+    transform 800ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 500ms ease;
+}
+
+.greet.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.greet.is-gone {
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+/* ==========================================================================
+   Entrance
+   ========================================================================== */
+.reveal {
+  opacity: 0;
+  animation: rise 620ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(180ms + var(--i, 0) * 70ms);
+}
+
+@keyframes page-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   Small screens
+   ========================================================================== */
 @media (max-width: 680px) {
+  .page {
+    padding: var(--s-4) 0;
+  }
+
+  .avatar {
+    width: 84px;
+    height: 84px;
+  }
+
   .greet {
-    font-size: 16px;
+    font-size: 0.9375rem;
   }
 }
-@media (max-width: 767px) {
+
+/* Short / landscape viewports: tighten so the links still fit. */
+@media (max-height: 560px) {
+  .page {
+    padding: var(--s-3) 0;
+  }
+
+  .profile {
+    margin-bottom: var(--s-3);
+  }
+}
+
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none;
+  }
+
+  .ambient {
+    display: none;
+  }
+
+  .reveal {
+    opacity: 1;
+    animation: none;
+  }
+
+  .greet {
+    transform: none;
+    transition: opacity 300ms ease;
+  }
+
+  .links a,
+  .links a::after {
+    transition-duration: 1ms;
+  }
+
+  @media (hover: hover) {
+    .links a:hover {
+      transform: none;
+    }
+
+    .links a:hover::after {
+      transform: none;
+    }
+  }
 }

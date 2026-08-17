@@ -1,6 +1,11 @@
-const greetText = document.querySelector(".greet");
+const greet = document.querySelector(".greet");
 
-window.onload = () => {
-  greetText.style.animation =
-    "5s fadeIn  ease forwards ,1s disappear 8s ease forwards";
-};
+if (greet) {
+  // Next frame, so the browser paints the off-screen start state first and the
+  // class change actually animates instead of jumping straight to the end.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => greet.classList.add("is-visible"));
+  });
+
+  setTimeout(() => greet.classList.add("is-gone"), 8000);
+}
